@@ -108,7 +108,7 @@ int search(struct  node* root,int l,int r)
 		}
 		else
 		{
-			int mid=(l+r)/2;
+			int mid=(root->l_limit + root->r_limit)/2;
 			sum+=search(root->left,l,mid);
 			sum+=search(root->right,mid+1,r);
 		}
@@ -118,18 +118,24 @@ int search(struct  node* root,int l,int r)
 
 int main()
 {
-	int a[]={1,2,3,4,5,6};
-	int l=0,r=5;
+	int a[]={8,5,2,6,4,1,0,5,8};
+	int l=0,r=8;
 	struct  node* root=NULL;
 	root=create_segment_tree(root,a,l,r);
 	printf("segment tree : ");
 	display(root);
-	update(root,3,4,5);  // parmeters index and previous value and updated value
+	update(root,3,6,5);  // parmeters index and previous value and updated value
 	printf("\n");
 	printf("segment tree (updated) : ");
 	display(root);
-	int sum=search(root,1,4);
-	printf("\nsearch the sum in segment tree : ");
-	printf("%d",sum);
+	printf("\n");
+	int i,j;
+	for(i=0;i<9;i++)
+	{
+		for(j=i;j<9;j++)
+		{
+			printf("%d:%d: %d \n",i,j,search(root,i,j));
+		}
+	}
 	return 0;	
 }
