@@ -74,7 +74,7 @@ int same_level(struct node *root,int level)
 	if(root==NULL)
 	 	return -1;
 	if(root->left==NULL && root->right==NULL)
-		return level+1;
+		return level;
 	if(root->left!=NULL && root->right!=NULL && root->left->left==NULL && root->left->right==NULL && root->right->left==NULL && root->right->right==NULL)
 		return level+1;
 	int x=same_level(root->left,level+1);
@@ -88,9 +88,9 @@ int same_level(struct node *root,int level)
 // chech a tree is complete BST or not
 int check_complete_BST(struct node* root)
 {
-	int x=same_level(root,0);
-	if(x>0)
-		return x && check_strictly_BST(root);
+	int x=check_strictly_BST(root);
+	if(x==1)
+		return x && same_level(root,1);
 	else
 		return 0;
 }

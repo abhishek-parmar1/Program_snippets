@@ -1,4 +1,4 @@
-// wap  to check in a BST all the leaf nodes at the same level or not
+// wap  to level order traversal on a BST
 #include<iostream>
 #include<stdio.h>
 #include<stdlib.h>
@@ -56,38 +56,60 @@ void display(struct node* root)
 	display(root->right);
 }
 
-// check all the leaf nodes at same level or not
-int same_level(struct node *root,int level)
+// height of BST
+int height(struct node* root)
 {
 	if(root==NULL)
-	 	return -1;
+		return 0;
 	if(root->left==NULL && root->right==NULL)
-		return level;
-	if(root->left!=NULL && root->right!=NULL && root->left->left==NULL && root->left->right==NULL && root->right->left==NULL && root->right->right==NULL)
-		return level+1;
-	int x=same_level(root->left,level+1);
-	int y=same_level(root->right,level+1);
-	if(x==y && x!=0)
-		return level+1;
+		return 1;
+	int x=0,y=0;
+	if(root->left!=NULL)
+	{
+		x=height(root->left);
+	}
+	if(root->right!=NULL)
+	{
+		y=height(root->right);
+	}
+	if(x>y)
+		return x+1;
 	else
-		return 0;	
+		return y+1;
+}
+
+// print the nodes on each level
+void print_level(struct node* root,int l)
+{
+	if(root==NULL)
+		return;
+	if(l==1)
+		cout<<root->data<<" ";
+	if(l>1)
+	{
+		print_level(root->left,l-1);
+		print_level(root->right,l-1);		
+	}
+}
+
+// for level order traversal
+void level_order_traversal(struct node* root)
+{
+	int h=height(root);
+	for(int i=1;i<=h;i++)
+	{
+		print_level(root,i);
+	}
 }
 
 // main function
 int main()
 {
-	int  a[]={8,4,12,2,6,10,14,1,3,5,7,9,11,13,15};
-	int n=15;
+	int  a[8]={9,17,8,6,5,3,2,0};
+	int n=8;
 	struct node* root=NULL;
 	root=create_BST(root,a,n);
 	display(root);
 	cout<<"\n";
-	if(same_level(root,1)>0)
-	{
-		cout<<"TRUE";
-	}
-	else
-	{
-		cout<<"FALSE";
-	}
+	level_order_traversal(root);
 }
