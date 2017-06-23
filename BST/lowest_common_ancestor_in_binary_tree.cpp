@@ -2,12 +2,8 @@
 #include<iostream>
 #include<stdio.h>
 #include<stdlib.h>
-#include<queue>
 
 using namespace std;
-
-//queue
-queue<struct node*> q1;
 
 // node structure
 struct node{
