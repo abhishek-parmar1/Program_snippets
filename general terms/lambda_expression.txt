@@ -1,0 +1,183 @@
+LAMBDA_EXPRESSIONS
+
+PROBLEM
+C++ includes useful generic functions like std::for_each and std::transform, which can be very handy. Unfortunately they can also be quite cumbersome to use, particularly if the functor you would like to apply is unique to the particular function.
+
+#include <algorithm>
+#include <vector>
+
+namespace {
+  struct f {
+    void operator()(int) {
+      // do something
+    }
+  };
+}
+
+void func(std::vector<int>& v) {
+  f f;
+  std::for_each(v.begin(), v.end(), f);
+}
+
+If you only use f once and in that specific place it seems overkill to be writing a whole class just to do something trivial and one off.
+
+SOLUTION
+
+C++11 introduces lambdas allow you to write an inline, anonymous functor to replace the struct f. For small simple examples this can be cleaner to read (it keeps everything in one place) and potentially simpler to maintain, for example in the simplest form:
+
+void func3(std::vector<int>& v) {
+  std::for_each(v.begin(), v.end(), [](int) { /* do something here*/ });
+}
+Lambda functions are just syntactic sugar for anonymous functors.
+
+RETURN TYPES
+
+In simple cases the return type of the lambda is deduced for you, e.g.:
+
+void func4(std::vector<double>& v) {
+  std::transform(v.begin(), v.end(), v.begin(),
+                 [](double d) { return d < 0.00001 ? 0 : d; }
+                 );
+}
+however when you start to write more complex lambdas you will quickly encounter cases where the return type cannot be deduced by the compiler, e.g.:
+
+void func4(std::vector<double>& v) {
+    std::transform(v.begin(), v.end(), v.begin(),
+        [](double d) {
+            if (d < 0.0001) {
+                return 0;
+            } else {
+                return d;
+            }
+        });
+}
+To resolve this you are allowed to explicitly specify a return type for a lambda function, using -> T:
+
+void func4(std::vector<double>& v) {
+    std::transform(v.begin(), v.end(), v.begin(),
+        [](double d) -> double {
+            if (d < 0.0001) {
+                return 0;
+            } else {
+                return d;
+            }
+        });
+}
+
+
+CAPTURING VAIABLES
+
+So far we've not used anything other than what was passed to the lambda within it, but we can also use other variables, within the lambda. If you want to access other variables you can use the capture clause (the [] of the expression), which has so far been unused in these examples, e.g.:
+
+void func5(std::vector<double>& v, const double& epsilon) {
+    std::transform(v.begin(), v.end(), v.begin(),
+        [epsilon](double d) -> double {
+            if (d < epsilon) {
+                return 0;
+            } else {
+                return d;
+            }
+        });
+}
+You can capture by both reference and value, which you can specify using & and = respectively:
+
+[&epsilon] capture by reference
+[&] captures all variables used in the lambda by reference
+[=] captures all variables used in the lambda by value
+[&, epsilon] captures variables like with [&], but epsilon by value
+[=, &epsilon] captures variables like with [=], but epsilon by reference
+
+The generated operator() is const by default, with the implication that captures will be const when you access them by default. This has the effect that each call with the same input would produce the same result, however you can mark the lambda as mutable to request that the operator() that is produced is not const.
+
+int x = 5;
+auto a = [=]() mutable { ++x; std::cout << x << '\n'; };
+auto b = [&]()         { ++x; std::cout << x << '\n'; };
+
+The first will only modify its own copy of x and leave the outside x unchanged. The second will modify the outside x.
+
+Add a print statement after trying each:
+
+a();
+std::cout << x << "----\n";
+b();
+std::cout << x << '\n';
+This is expected to print:
+
+6
+5
+----
+6
+6
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+What is a lambda function?
+
+The C++ concept of a lambda function originates in the lambda calculus and functional programming. A lambda is an unnamed function that is useful (in actual programming, not theory) for short snippets of code that are impossible to reuse and are not worth naming.
+
+In C++ a lambda function is defined like this
+
+[]() { } // barebone lambda
+or in all its glory
+
+[]() mutable -> T { } // T is the return type, still lacking throw()
+[] is the capture list, () the argument list and {} the function body.
+
+The capture list
+
+The capture list defines what from the outside of the lambda should be available inside the function body and how. It can be either:
+
+a value: [x]
+a reference [&x]
+any variable currently in scope by reference [&]
+same as 3, but by value [=]
+You can mix any of the above in a comma separated list [x, &y].
+
+The argument list
+
+The argument list is the same as in any other C++ function.
+
+The function body
+
+The code that will be executed when the lambda is actually called.
+
+Return type deduction
+
+If a lambda has only one return statement, the return type can be omitted and has the implicit type of decltype(return_statement).
+
+Mutable
+
+If a lambda is marked mutable (e.g. []() mutable { }) it is allowed to mutate the values that have been captured by value.
+
+Use cases
+
+The library defined by the ISO standard benefits heavily from lambdas and raises the usability several bars as now users don't have to clutter their code with small functors in some accessible scope.
+
+C++14
+
+In C++14 lambdas have been extended by various proposals.
+
+Initialized Lambda Captures
+
+An element of the capture list can now be initialized with =. This allows renaming of variables and to capture by moving. An example taken from the standard:
+
+int x = 4;
+auto y = [&r = x, x = x+1]()->int {
+            r += 2;
+            return x+2;
+         }();  // Updates ::x to 6, and initializes y to 7.
+
+and one taken from Wikipedia showing how to capture with std::move:
+
+auto ptr = std::make_unique<int>(10); // See below for std::make_unique
+auto lambda = [ptr = std::move(ptr)] {return *ptr;};
+
+Generic Lambdas
+
+Lambdas can now be generic (auto would be equivalent to T here if T were a type template argument somewhere in the surrounding scope):
+
+auto lambda = [](auto x, auto y) {return x + y;};
+Improved Return Type Deduction
+
+C++14 allows deduced return types for every function and does not restrict it to functions of the form return expression;. This is also extended to lambdas.
